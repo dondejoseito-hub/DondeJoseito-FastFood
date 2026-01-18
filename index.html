@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>DondeJoseito FastFood</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #fff;
+      background: url('joseito Fast Food_page-0001.jpg') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      text-align: center;
+      background: rgba(0,0,0,0.7);
+      padding: 15px;
+    }
+    .category {
+      margin: 20px;
+      background: rgba(0,0,0,0.6);
+      border-radius: 10px;
+      padding: 15px;
+    }
+    .carousel {
+      display: flex;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+    }
+    .item {
+      flex: 0 0 auto;
+      width: 220px;
+      margin: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .item h3 {
+      margin: 0;
+      font-size: 1.1em;
+    }
+    .item p {
+      font-size: 0.9em;
+    }
+    .select-btn {
+      margin-top: 8px;
+      padding: 6px 10px;
+      background: #ff9800;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .cantidad {
+      margin-top: 5px;
+      font-size: 0.9em;
+    }
+    #pedido {
+      display: block;
+      margin: 20px auto;
+      padding: 12px 20px;
+      background: #25D366;
+      color: #fff;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      text-align: center;
+      width: 260px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🍔 DondeJoseito FastFood</h1>
+  <div id="menu"></div>
+  <a id="pedido" href="#" target="_blank">📲 Pedir</a>
+
+  <script>
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTbg8KB2-y4tvbCW0e7Gf5CgXINL0nYscJRYD8BSavoNc40YZp0XWMF2-L686N0VoPqNIBTECKQqPd5/pub?gid=0&single=true&output=tsv";
+    const dolarApi = "https://ve.dolarapi.com/v1/dolares/oficial";
+    const numeroWhatsApp = "584128380827"; // número en formato internacional
+
+    let seleccionados = {};
+    let tasa = 0;
+
+    async function loadMenu() {
+      try {
+        const dolarRes = await fetch(dolarApi);
+        const dolarData = await dolarRes.json();
+        tasa = dolarData.promedio;
+
+        const res = await fetch(sheetUrl);
+        const text = await res.text();
+        const rows = text.trim().split("\n").map(r => r.split("\t"));
+        const headers = rows[0];
+        const data = rows.slice(1);
+
+        const categorias = {};
+        data.forEach(row => {
+          const item = {};
+          headers.forEach((h,i) => item[h] = row[i]);
+
+          let precioBs, precioUsd;
+          if(item.currency.toUpperCase() === "USD") {
+            precioUsd = parseFloat(item.price);
+            precioBs = (precioUsd * tasa).toFixed(2);
+          } else {
+            precioBs = parseFloat(item.price);
+            precioUsd = (precioBs / tasa).toFixed(2);
+          }
+
+          item.precioUsd = precioUsd;
+          item.precioBs = precioBs;
+
+          if(!categorias[item.category]) categorias[item.category] = [];
+          categorias[item.category].push(item);
+        });
+
+        const menuDiv = document.getElementById("menu");
+        menuDiv.innerHTML = "";
+
+        Object.keys(categorias).forEach(cat => {
+          const catDiv = document.createElement("div");
+          catDiv.className = "category";
+          catDiv.innerHTML = `<h2>${cat}</h2><div class="carousel"></div>`;
+          const carousel = catDiv.querySelector(".carousel");
+
+          categorias[cat].forEach(item => {
+            const div = document.createElement("div");
+            div.className = "item";
+            div.innerHTML = `
+              <h3>${item.name}</h3>
+              <p>${item.description}</p>
+              <p><strong>${item.precioUsd} USD</strong> / <strong>${item.precioBs} Bs</strong></p>
+              <button class="select-btn">➕ Agregar</button>
+              <div class="cantidad">Cantidad: 0</div>
+            `;
+            const btn = div.querySelector(".select-btn");
+            const cantidadDiv = div.querySelector(".cantidad");
+
+            btn.addEventListener("click", () => {
+              if(!seleccionados[item.name]) seleccionados[item.name] = {item, cantidad:0};
+              seleccionados[item.name].cantidad++;
+              cantidadDiv.textContent = "Cantidad: " + seleccionados[item.name].cantidad;
+              actualizarPedido();
+            });
+
+            carousel.appendChild(div);
+          });
+
+          menuDiv.appendChild(catDiv);
+        });
+      } catch (err) {
+        document.getElementById("menu").innerHTML = "Error cargando menú 😢";
+        console.error(err);
+      }
+    }
+
+    function actualizarPedido() {
+      const pedidoBtn = document.getElementById("pedido");
+      const items = Object.values(seleccionados);
+      if(items.length === 0) {
+        pedidoBtn.href = "#";
+        pedidoBtn.textContent = "📲 Pedir";
+        return;
+      }
+
+      let totalUsd = 0;
+      let totalBs = 0;
+      let detalle = "";
+
+      items.forEach(i => {
+        const subtotalUsd = i.item.precioUsd * i.cantidad;
+        const subtotalBs = i.item.precioBs * i.cantidad;
+        totalUsd += subtotalUsd;
+        totalBs += subtotalBs;
+        detalle += `- ${i.item.name} ×${i.cantidad} → ${subtotalUsd.toFixed(2)} USD (≈ ${subtotalBs.toFixed(2)} Bs)\n`;
+      });
+
+      const mensaje = `¡Hola, Joseito! Quiero realizar un pedido:\n\n${detalle}\n*TOTAL ESTIMADO:* ${totalUsd.toFixed(2)} USD / ${totalBs.toFixed(2)} Bs\n(Tasa oficial: ${tasa} Bs/USD)\n\nPor favor, necesito confirmar el pedido, delivery y los detalles de pago. ¡Gracias!`;
+
+      const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
+      pedidoBtn.href = url;
+      pedidoBtn.textContent = `📲 Pedir (${items.reduce((a,b)=>a+b.cantidad,0)})`;
+    }
+
+    loadMenu();
+  </script>
+</body>
+</html>
