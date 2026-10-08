@@ -229,23 +229,28 @@
         // Verificar si la URL contiene "mesa"
         if (window.location.href.includes('mesa')) {
             
-            // 1. Ocultar el carrito flotante (botón verde)
-            const carritoFlotante = document.querySelector('.cart-btn, .floating-cart, [class*="cart"]');
+            console.log('Modo mesa detectado - ocultando elementos de pedido');
+            
+            // 1. Ocultar el botón flotante de WhatsApp (carrito)
+            const carritoFlotante = document.getElementById('carrito-flotante');
             if (carritoFlotante) {
                 carritoFlotante.style.display = 'none';
+                console.log('Carrito flotante oculto');
             }
             
-            // 2. Ocultar todos los botones "Agregar"
-            const botonesAgregar = document.querySelectorAll('button[class*="add"], .add-btn, [onclick*="add"]');
+            // 2. Ocultar todos los botones "➕ Agregar"
+            const botonesAgregar = document.querySelectorAll('.select-btn');
             botonesAgregar.forEach(btn => {
                 btn.style.display = 'none';
             });
+            console.log('Botones Agregar ocultos:', botonesAgregar.length);
             
-            // 3. Ocultar los contadores de cantidad
-            const contadores = document.querySelectorAll('[class*="cantidad"], [class*="qty"], [class*="count"]');
-            contadores.forEach(cont => {
-                cont.style.display = 'none';
+            // 3. Ocultar todos los textos de "Cantidad: X"
+            const cantidades = document.querySelectorAll('.cantidad');
+            cantidades.forEach(el => {
+                el.style.display = 'none';
             });
+            console.log('Contadores de cantidad ocultos:', cantidades.length);
         }
     });
 </script>
