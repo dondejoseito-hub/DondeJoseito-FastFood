@@ -226,17 +226,26 @@
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // 1. Verificamos si la URL contiene la palabra "mesa"
-        // Esto cubre tanto ?mesa=1 como /mesa/1
+        // Verificar si la URL contiene "mesa"
         if (window.location.href.includes('mesa')) {
             
-            // 2. Buscamos el elemento por su ID
-            const elemento = document.getElementById('carritoBtn');
-            
-            // 3. Si existe, lo ocultamos
-            if (elemento) {
-                elemento.style.display = 'none';
+            // 1. Ocultar el carrito flotante (botón verde)
+            const carritoFlotante = document.querySelector('.cart-btn, .floating-cart, [class*="cart"]');
+            if (carritoFlotante) {
+                carritoFlotante.style.display = 'none';
             }
+            
+            // 2. Ocultar todos los botones "Agregar"
+            const botonesAgregar = document.querySelectorAll('button[class*="add"], .add-btn, [onclick*="add"]');
+            botonesAgregar.forEach(btn => {
+                btn.style.display = 'none';
+            });
+            
+            // 3. Ocultar los contadores de cantidad
+            const contadores = document.querySelectorAll('[class*="cantidad"], [class*="qty"], [class*="count"]');
+            contadores.forEach(cont => {
+                cont.style.display = 'none';
+            });
         }
     });
 </script>
