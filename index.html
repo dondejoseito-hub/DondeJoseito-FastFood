@@ -224,5 +224,21 @@
 
     loadMenu();
   </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Verificamos si la URL contiene la palabra "mesa"
+        // Esto cubre tanto ?mesa=1 como /mesa/1
+        if (window.location.href.includes('mesa')) {
+            
+            // 2. Buscamos el elemento por su ID
+            const elemento = document.getElementById('carritoBtn');
+            
+            // 3. Si existe, lo ocultamos
+            if (elemento) {
+                elemento.style.display = 'none';
+            }
+        }
+    });
+</script>
 </body>
 </html>
